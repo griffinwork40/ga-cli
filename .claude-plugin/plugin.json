@@ -1,0 +1,12 @@
+{
+  "name": "ga-cli",
+  "description": "CLI for the Google Analytics 4 Data API — pull aggregate traffic reports from any GA4 property. Read-only, aggregate-only (no PII). An agent-afk plugin.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Griffin Long",
+    "email": "griffinwork40@gmail.com"
+  },
+  "repository": "https://github.com/griffinwork40/ga-cli",
+  "license": "MIT",
+  "keywords": ["google-analytics", "ga4", "cli", "analytics", "afk", "skill"]
+}

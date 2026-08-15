@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# ga — read-only Google Analytics 4 CLI (self-contained entrypoint)
+# Runs the ga_cli package from a venv adjacent to this script.
+# Use SCRIPT_DIR-relative paths so the tool works wherever it's cloned/installed.
+set -euo pipefail
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Prefer a venv at $DIR/../../../.venv (repo root) or $DIR/../.venv (skill root),
+# falling back to the system Python if neither exists.
+if [ -x "$DIR/../../../.venv/bin/python" ]; then
+    PYTHON="$DIR/../../../.venv/bin/python"
+elif [ -x "$DIR/../.venv/bin/python" ]; then
+    PYTHON="$DIR/../.venv/bin/python"
+else
+    PYTHON="$(command -v python3 || command -v python)"
+fi
+
+export PYTHONPATH="$DIR${PYTHONPATH:+:$PYTHONPATH}"
+exec "$PYTHON" -m ga_cli "$@"
