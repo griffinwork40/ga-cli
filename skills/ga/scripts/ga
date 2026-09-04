@@ -4,7 +4,13 @@
 # Use SCRIPT_DIR-relative paths so the tool works wherever it's cloned/installed.
 set -euo pipefail
 
-DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve symlinks so venv-relative paths work when called via a symlink.
+SELF="$0"
+while [ -L "$SELF" ]; do
+    LINK="$(readlink "$SELF")"
+    case "$LINK" in /*) SELF="$LINK" ;; *) SELF="$(dirname "$SELF")/$LINK" ;; esac
+done
+DIR="$(cd "$(dirname "$SELF")" && pwd)"
 
 # Prefer a venv at $DIR/../../../.venv (repo root) or $DIR/../.venv (skill root),
 # falling back to the system Python if neither exists.
