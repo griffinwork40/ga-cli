@@ -22,7 +22,7 @@ description: >
 `ga` is a self-contained Python CLI (Typer + Rich) wrapping two Google Analytics 4
 APIs, **read-only**:
 
-- **Admin API** (`accountSummaries`) → `ga properties`
+- **Admin API** (`accountSummaries`, `listDataStreams`) → `ga properties`, `ga datastreams`
 - **Data API** (`runReport`, `getMetadata`) → `ga report` + all canned reports
 
 Every command prints **JSON to stdout by default** (pipe into `jq`); add `--pretty`
@@ -49,6 +49,7 @@ numeric IDs accessible to the authenticated account.
 | Command | What it does |
 |---|---|
 | `ga properties` | List accessible properties (account + property names + numeric id) via Admin accountSummaries. |
+| `ga datastreams` | List data streams for a property -- measurement ID (`G-XXXXXXXXXX`), URI, display name. |
 | `ga auth [--reauth]` | Load/refresh creds from the cached token; `--reauth` forces fresh browser consent. Prints `authorized / token cached` status only. |
 | `ga report --metrics …` | Generic runReport (any metrics × dimensions). See flags below. |
 | `ga acquisition` | Sessions + users by `sessionDefaultChannelGroup`. |
@@ -89,7 +90,17 @@ Then set it once (or pass `--property` on each call):
 export GA_PROPERTY_ID=<your-numeric-id>
 ```
 
-### 1. Acquisition channels (last 28 days) — where traffic comes from
+### 1. Get measurement ID for a property
+
+```bash
+ga datastreams --property 123456789
+# → {"property_id": "123456789", "rows": [{"display_name": "My Site", "stream_id": "...", "type": "1", "measurement_id": "G-XXXXXXXXXX", "default_uri": "https://example.com"}], "count": 1}
+
+ga datastreams --property 123456789 | jq -r '.rows[0].measurement_id'
+# → G-XXXXXXXXXX
+```
+
+### 2. Acquisition channels (last 28 days) -- where traffic comes from
 
 ```bash
 ga acquisition --days 28 --pretty
@@ -99,33 +110,33 @@ ga acquisition --days 28 \
   | jq '{sessions: ([.rows[].sessions|tonumber]|add), users: ([.rows[].totalUsers|tonumber]|add)}'
 ```
 
-### 2. Top referrers (source / medium)
+### 3. Top referrers (source / medium)
 
 ```bash
 ga referrers --days 28 --limit 10 \
   | jq -r '.rows[] | [.sessions, .sessionSourceMedium] | @tsv'
 ```
 
-### 3. Top pages / posts by views
+### 4. Top pages / posts by views
 
 ```bash
 ga top-pages --days 28 --limit 10 \
   | jq -r '.rows[] | [.screenPageViews, .pagePath] | @tsv'
 ```
 
-### 4. Geo breakdown
+### 5. Geo breakdown
 
 ```bash
 ga geo --days 28 --limit 5 | jq -c '.rows[]'
 ```
 
-### 5. Daily trend (last 14 days)
+### 6. Daily trend (last 14 days)
 
 ```bash
 ga trend --days 14 | jq -r '.rows[] | [.date, .sessions, .totalUsers] | @tsv'
 ```
 
-### 6. Arbitrary report — any metric × dimension
+### 7. Arbitrary report -- any metric x dimension
 
 ```bash
 # Sessions + users by channel group, ordered desc, as a table:
@@ -142,7 +153,7 @@ ga report --metrics activeUsers,newUsers \
 ga report --metrics engagementRate,averageSessionDuration --days 7
 ```
 
-### 7. Discover valid metrics/dimensions for a property
+### 8. Discover valid metrics/dimensions for a property
 
 ```bash
 # What can I query?
@@ -155,7 +166,7 @@ ga metadata | jq -r '.metrics[] | select(.api_name|test("user";"i")) | .api_name
 ga metadata | jq -r '.dimensions[] | select(.api_name|test("source";"i")) | .api_name'
 ```
 
-### 8. Query a different property inline
+### 9. Query a different property inline
 
 ```bash
 ga acquisition --property <other-id> --days 28
@@ -219,7 +230,8 @@ skills/ga/
 │       ├── client.py           # get_creds(), config/auth resolution,
 │       │                       #   admin+data client factories, output helpers
 │       ├── auth.py             # `ga auth`, `ga properties`
-│       └── report.py           # generic `report` + canned reports
+│       ├── report.py           # generic `report` + canned reports
+│       └── streams.py          # `ga datastreams`
 └── references/
     └── auth-setup.md           # GCP setup + the 7-day token caveat
 ```
