@@ -20,7 +20,7 @@ app = typer.Typer(
 )
 
 # Import command modules — triggers their @app.command() decorators.
-from ga_cli import auth, report  # noqa: E402, F401
+from ga_cli import auth, report, streams  # noqa: E402, F401
 
 
 def main() -> None:
